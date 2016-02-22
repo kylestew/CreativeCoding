@@ -18,14 +18,16 @@
 //   "f" : "ffffff"
 // };
 
-var lSystem;
-var step, skip;
 
-function setup() {
-  createCanvas(600, 600);
-  frameRate(30);
-  stroke(255);
-  noFill();
+  // Pentigree
+  // lSystem = new LSystem({
+  //   axiom: "F-F-F-F",
+  //   rules: {
+  //     "F": "F-F+F+FF-F-F+F"
+  //   },
+  //   theta: radians(90)
+  // })
+  // lSystem.iterate(3);
 
   // ???
   // lSystem = new LSystem({
@@ -48,40 +50,59 @@ function setup() {
   // })
   // lSystem.iterate(8);
 
-  // ???
-  lSystem = new LSystem({
-    axiom: "F",
-    rules: {
-      "A": "-F+AA++A+F--F-A",
-      "F": "F+A++A-F--FF-A+"
-    },
-    theta: radians(60)
-  })
-  lSystem.iterate(5);
+var lSystem;
+var step, skip;
 
-  // Pentigree
-  // lSystem = new LSystem({
-  //   axiom: "F-F-F-F",
-  //   rules: {
-  //     "F": "F-F+F+FF-F-F+F"
-  //   },
-  //   theta: radians(90)
-  // })
-  // lSystem.iterate(3);
+function setup() {
+  createCanvas(600, 400);
+  frameRate(30);
+  stroke(255);
+  strokeWeight(1);
+  noFill();
 
-  // try to center
-  background(1);
-  translate(width/2, height/3);
-  step = 3;
-  skip = 256;
-  $('#generation-text').text("generation: " + lSystem.generation);
+  lSystem = LSystem.KOCH_ISLAND();
+  lSystem.iterate(2);
+  size = lSystem.determineSizeInfo();
+  console.log(size);
+
+  console.log(lSystem.production)
+
+  background(0);
 }
 
+var size;
 function draw() {
+  $('#generation-text').text("generation: " + lSystem.generation + " :: points: " + size.points);
+
+  // default scale by width
+  var _scale = width / size.width;
+  if (size.height*_scale > height) {
+    // if height is bounding, scale by that instead
+    _scale = height / size.height;
+  }
+
+  // center canvas
+  translate((width-(size.width)*_scale)/2, (height-size.height*_scale)/2);
+  scale(_scale, _scale);
+  translate(-size.x, -size.x);
+
+  strokeWeight(1/_scale);
   if (lSystem.renderComplete)
     noLoop();
-  lSystem.renderStep(skip, step);
+  lSystem.renderStep(32);
 }
+
+// LSystem.KOCH_ISLAND = function() {
+//   return new LSystem({
+//     axiom: "F",
+//     rules: {
+//       "A": "-F+AA++A+F--F-A",
+//       "F": "F+A++A-F--FF-A+"
+//     },
+//     theta: radians(60)
+//   });
+// }
+
 
 var LSystem = function LSystem(props) {
   this.axiom = props.axiom;
@@ -92,11 +113,22 @@ var LSystem = function LSystem(props) {
   this.generation = 0;
 
   this.turtle = createVector(0, 0);
+  this.index = 0;
   this.angle = 0;
-  this.renderComplete = false;
 }
+
+LSystem.KOCH_ISLAND = function() {
+  return new LSystem({
+    axiom: "F-F-F-F",
+    rules: {
+      "F": "F-F+F+FF-F-F+F",
+    },
+    theta: radians(90)
+  });
+}
+
 LSystem.prototype.iterate = function(iterations) {
-  iterations = iterations || 1;
+  iterations = typeof iterations !== 'undefined' ? iterations : 1;
   // console.time("iterate");
 
   for (var itr = 0; itr < iterations; itr++) {
@@ -114,12 +146,19 @@ LSystem.prototype.iterate = function(iterations) {
   // console.log("production length: " + this.production.length);
   // console.timeEnd("iterate");
 };
-LSystem.prototype.renderStep = function(steps, length) {
-  for (var i = 0; i < steps; i++) {
+LSystem.prototype.determineSizeInfo = function() {
+  var turtle = createVector(0, 0);
+  var x0, y0, x1, y1, points;
+  x0 = y0 = x1 = y1 = points = 0;
+  for (var i = 0; i < this.production.length; i++) {
     switch(this.production.charAt(i)) {
       case 'f': // skip
-        this.turtle.x += length*cos(this.angle);
-        this.turtle.y += length*sin(this.angle);
+        turtle.x += cos(this.angle);
+        turtle.y += sin(this.angle);
+        if (turtle.x < x0) x0 = turtle.x;
+        if (turtle.y < y0) y0 = turtle.y;
+        if (turtle.x > x1) x1 = turtle.x;
+        if (turtle.y > y1) y1 = turtle.y;
         break;
       case '+':
         this.angle += this.theta;
@@ -128,16 +167,47 @@ LSystem.prototype.renderStep = function(steps, length) {
         this.angle -= this.theta;
         break;
       default:
-        var x = this.turtle.x + length*cos(this.angle);
-        var y = this.turtle.y + length*sin(this.angle);
+        points++;
+        turtle.x += cos(this.angle);
+        turtle.y += sin(this.angle);
+        if (turtle.x < x0) x0 = turtle.x;
+        if (turtle.y < y0) y0 = turtle.y;
+        if (turtle.x > x1) x1 = turtle.x;
+        if (turtle.y > y1) y1 = turtle.y;
+        break;
+    }
+  }
+
+  return {
+    x: x0,
+    y: y0,
+    width: x1-x0,
+    height: y1-y0,
+    points: points
+  }
+};
+LSystem.prototype.renderStep = function(steps) {
+  for (; this.index < this.production.length && steps > 0; this.index++) {
+    steps--;
+
+    switch(this.production.charAt(this.index)) {
+      case 'f': // skip
+        this.turtle.x += cos(this.angle);
+        this.turtle.y += sin(this.angle);
+        break;
+      case '+':
+        this.angle += this.theta;
+        break;
+      case '-':
+        this.angle -= this.theta;
+        break;
+      default:
+        var x = this.turtle.x + cos(this.angle);
+        var y = this.turtle.y + sin(this.angle);
         line(this.turtle.x, this.turtle.y, x, y);
         this.turtle.x = x;
         this.turtle.y = y;
         break;
     }
   }
-
-  this.production = this.production.substring(steps);
-  if (this.production == "")
-    this.renderComplete = true;
 };
