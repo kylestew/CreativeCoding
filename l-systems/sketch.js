@@ -1,55 +1,4 @@
 
-// koch
-// var axiom = "F-F-F-F";
-// var rules = {
-//   "F" : "F-F+F+FF-F-F+F",
-// };
-
-// quadratic koch
-// var axiom = "-F";
-// var rules = {
-//   "F" : "F+F-F-F+F",
-// };
-
-// ???
-// var axiom = "F+F+F+F";
-// var rules = {
-//   "F" : "F+f-FF+F+FF+Ff+FF-f+FF-F-FF-Ff-FFF",
-//   "f" : "ffffff"
-// };
-
-
-  // Pentigree
-  // lSystem = new LSystem({
-  //   axiom: "F-F-F-F",
-  //   rules: {
-  //     "F": "F-F+F+FF-F-F+F"
-  //   },
-  //   theta: radians(90)
-  // })
-  // lSystem.iterate(3);
-
-  // ???
-  // lSystem = new LSystem({
-  //   axiom: "F",
-  //   rules: {
-  //     "F": "+F--F+"
-  //   },
-  //   theta: radians(45)
-  // })
-  // lSystem.iterate(12);
-
-  // ???
-  // lSystem = new LSystem({
-  //   axiom: "A",
-  //   rules: {
-  //     "B": "A+B+A",
-  //     "A": "B-A-B"
-  //   },
-  //   theta: radians(60)
-  // })
-  // lSystem.iterate(8);
-
 // CONTROLS
 var clearGenerations = true;
 var clearColor = 16;
@@ -68,8 +17,7 @@ function setup() {
 }
 
 function draw() {
-
-  // slowly fade old
+  // slowly fade old if not clearing it
   if (!clearGenerations) {
     fill(0,0,0,1);
     rect(0,0,width,height);
@@ -96,9 +44,9 @@ function draw() {
   scale(_scale, _scale);
   // translate to starting point
   translate(-renderSize.x, -renderSize.y);
-  // strokes scale on p5 for some reason
-  strokeWeight(2/_scale);
-  // stroke(255, 255, 255, 255);
+  // scale down strokes as more points are rendered
+  var weight = 8/(lSystem.generation*lSystem.generation+1)/_scale;
+  strokeWeight(weight);
   stroke(255, 128, 255);
 
   lSystem.renderStep(renderSize.points/(1*30));
@@ -106,7 +54,7 @@ function draw() {
   // move to next generation?
   if (lSystem.renderComplete) {
     noLoop();
-    if (lSystem.generation >= 5) {
+    if (renderSize.points > 100000 || lSystem.generation >= 6) {
       return; // too many points to handle
     }
 
@@ -127,21 +75,7 @@ function draw() {
 
 
 
-
-
-
-// LSystem.KOCH_ISLAND = function() {
-//   return new LSystem({
-//     axiom: "F",
-//     rules: {
-//       "A": "-F+AA++A+F--F-A",
-//       "F": "F+A++A-F--FF-A+"
-//     },
-//     theta: radians(60)
-//   });
-// }
-
-
+/*== L-SYSYEMS ==*/
 var LSystem = function LSystem(props) {
   this.axiom = props.axiom;
   this.rules = props.rules;
@@ -165,7 +99,7 @@ LSystem.KOCH_ISLAND = function() {
     theta: radians(90)
   });
 }
-LSystem.KOCH_ISLAND_2 = function() {
+LSystem.KOCH_TRIANGLE = function() {
   return new LSystem({
     axiom: "-F",
     rules: {
@@ -184,7 +118,7 @@ LSystem.KOCH_LAKES = function() {
     theta: radians(90)
   });
 }
-LSystem.KOCH_0 = function() {
+LSystem.KOCH_DOYLE = function() {
   return new LSystem({
     axiom: "F-F-F-F",
     rules: {
@@ -193,6 +127,44 @@ LSystem.KOCH_0 = function() {
     theta: radians(90)
   });
 }
+LSystem.KOCH_BLOCK = function() {
+  return new LSystem({
+    axiom: "F-F-F-F",
+    rules: {
+      "F": "FF-F-F-F-FF",
+    },
+    theta: radians(90)
+  });
+}
+LSystem.KOCH_QUILT = function() {
+  return new LSystem({
+    axiom: "F-F-F-F",
+    rules: {
+      "F": "FF-F+F-F-FF",
+    },
+    theta: radians(90)
+  });
+}
+LSystem.KOCH_MOSS = function() {
+  return new LSystem({
+    axiom: "F-F-F-F",
+    rules: {
+      "F": "FF-F--F-F",
+    },
+    theta: radians(90)
+  });
+}
+LSystem.KOCH_DRAGON = function() {
+  return new LSystem({
+    axiom: "F-F-F-F",
+    rules: {
+      "F": "F-FF--F-F",
+    },
+    theta: radians(90)
+  });
+}
+
+
 
 LSystem.prototype.iterate = function(iterations) {
   iterations = typeof iterations !== 'undefined' ? iterations : 1;
