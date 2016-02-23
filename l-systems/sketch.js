@@ -54,18 +54,17 @@ var lSystem;
 var step, skip;
 
 function setup() {
-  createCanvas(600, 400);
+  createCanvas(600, 600);
   frameRate(30);
   stroke(255);
   strokeWeight(1);
   noFill();
 
-  lSystem = LSystem.KOCH_ISLAND();
-  lSystem.iterate(2);
+  lSystem = LSystem.KOCH_0();
+  lSystem.iterate(4);
   size = lSystem.determineSizeInfo();
-  console.log(size);
 
-  console.log(lSystem.production)
+  console.log(size);
 
   background(0);
 }
@@ -80,16 +79,18 @@ function draw() {
     // if height is bounding, scale by that instead
     _scale = height / size.height;
   }
+  _scale *= 0.8; // don't draw to the edge
 
   // center canvas
-  translate((width-(size.width)*_scale)/2, (height-size.height*_scale)/2);
+  translate((width-size.width*_scale)/2, (height-size.height*_scale)/2);
   scale(_scale, _scale);
   translate(-size.x, -size.x);
+  translate(-100, -12);
 
   strokeWeight(1/_scale);
   if (lSystem.renderComplete)
     noLoop();
-  lSystem.renderStep(32);
+  lSystem.renderStep(lSystem.generation * 32);
 }
 
 // LSystem.KOCH_ISLAND = function() {
@@ -126,6 +127,34 @@ LSystem.KOCH_ISLAND = function() {
     theta: radians(90)
   });
 }
+LSystem.KOCH_ISLAND_2 = function() {
+  return new LSystem({
+    axiom: "-F",
+    rules: {
+      "F": "F+F-F-F+F",
+    },
+    theta: radians(90)
+  });
+}
+LSystem.KOCH_LAKES = function() {
+  return new LSystem({
+    axiom: "F+F+F+F",
+    rules: {
+      "F": "F+f-FF+F+FF+Ff+FF-f+FF-F-FF-Ff-FFF",
+      "f": "ffffff"
+    },
+    theta: radians(90)
+  });
+}
+LSystem.KOCH_0 = function() {
+  return new LSystem({
+    axiom: "F-F-F-F",
+    rules: {
+      "F": "FF-F-F-F-F-F+F",
+    },
+    theta: radians(90)
+  });
+}
 
 LSystem.prototype.iterate = function(iterations) {
   iterations = typeof iterations !== 'undefined' ? iterations : 1;
@@ -152,14 +181,6 @@ LSystem.prototype.determineSizeInfo = function() {
   x0 = y0 = x1 = y1 = points = 0;
   for (var i = 0; i < this.production.length; i++) {
     switch(this.production.charAt(i)) {
-      case 'f': // skip
-        turtle.x += cos(this.angle);
-        turtle.y += sin(this.angle);
-        if (turtle.x < x0) x0 = turtle.x;
-        if (turtle.y < y0) y0 = turtle.y;
-        if (turtle.x > x1) x1 = turtle.x;
-        if (turtle.y > y1) y1 = turtle.y;
-        break;
       case '+':
         this.angle += this.theta;
         break;
@@ -189,7 +210,6 @@ LSystem.prototype.determineSizeInfo = function() {
 LSystem.prototype.renderStep = function(steps) {
   for (; this.index < this.production.length && steps > 0; this.index++) {
     steps--;
-
     switch(this.production.charAt(this.index)) {
       case 'f': // skip
         this.turtle.x += cos(this.angle);
