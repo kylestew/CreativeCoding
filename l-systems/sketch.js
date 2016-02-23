@@ -50,48 +50,85 @@
   // })
   // lSystem.iterate(8);
 
+// CONTROLS
+var clearGenerations = true;
+var clearColor = 16;
+
 var lSystem;
-var step, skip;
+var renderSize;
 
 function setup() {
   createCanvas(600, 600);
   frameRate(30);
-  stroke(255);
   strokeWeight(1);
   noFill();
+  background(clearColor);
 
-  lSystem = LSystem.KOCH_0();
-  lSystem.iterate(4);
-  size = lSystem.determineSizeInfo();
-
-  console.log(size);
-
-  background(0);
+  lSystem = LSystem.KOCH_ISLAND();
 }
 
-var size;
 function draw() {
-  $('#generation-text').text("generation: " + lSystem.generation + " :: points: " + size.points);
+
+  // slowly fade old
+  if (!clearGenerations) {
+    fill(0,0,0,1);
+    rect(0,0,width,height);
+    noFill();
+  }
+
+  if (!renderSize) {
+    renderSize = lSystem.determineSizeInfo();
+  }
+  $('#generation-text').text("generation: " + lSystem.generation + " :: points: " + renderSize.points);
 
   // default scale by width
-  var _scale = width / size.width;
-  if (size.height*_scale > height) {
+  var _scale = width / renderSize.width;
+  if (renderSize.height*_scale > height) {
     // if height is bounding, scale by that instead
-    _scale = height / size.height;
+    _scale = height / renderSize.height;
   }
-  _scale *= 0.8; // don't draw to the edge
 
-  // center canvas
-  translate((width-size.width*_scale)/2, (height-size.height*_scale)/2);
+  // center scale by 80% to not draw on edge
+  translate(width/2.0, height/2.0);
+  scale(0.8, 0.8);
+  translate(-width/2.0, -height/2.0);
+  // scale to draw l-system in view
   scale(_scale, _scale);
-  translate(-size.x, -size.x);
-  translate(-100, -12);
+  // translate to starting point
+  translate(-renderSize.x, -renderSize.y);
+  // strokes scale on p5 for some reason
+  strokeWeight(2/_scale);
+  // stroke(255, 255, 255, 255);
+  stroke(255, 128, 255);
 
-  strokeWeight(1/_scale);
-  if (lSystem.renderComplete)
+  lSystem.renderStep(renderSize.points/(1*30));
+
+  // move to next generation?
+  if (lSystem.renderComplete) {
     noLoop();
-  lSystem.renderStep(lSystem.generation * 32);
+    if (lSystem.generation >= 5) {
+      return; // too many points to handle
+    }
+
+    $('#generation-text').text("generating generation " + (lSystem.generation + 1));
+
+    lSystem.iterate(1);
+    renderSize = lSystem.determineSizeInfo();
+    setTimeout(function() {
+      if (clearGenerations)
+        background(clearColor);
+      loop(); // start again
+    }, 1200);
+
+    return;
+  }
 }
+
+
+
+
+
+
 
 // LSystem.KOCH_ISLAND = function() {
 //   return new LSystem({
@@ -116,6 +153,7 @@ var LSystem = function LSystem(props) {
   this.turtle = createVector(0, 0);
   this.index = 0;
   this.angle = 0;
+  this.renderComplete = false;
 }
 
 LSystem.KOCH_ISLAND = function() {
@@ -158,7 +196,6 @@ LSystem.KOCH_0 = function() {
 
 LSystem.prototype.iterate = function(iterations) {
   iterations = typeof iterations !== 'undefined' ? iterations : 1;
-  // console.time("iterate");
 
   for (var itr = 0; itr < iterations; itr++) {
     var curProd = this.production;
@@ -172,25 +209,29 @@ LSystem.prototype.iterate = function(iterations) {
     this.generation++;
   }
 
-  // console.log("production length: " + this.production.length);
-  // console.timeEnd("iterate");
+  // reset render commands
+  this.turtle = createVector(0, 0);
+  this.index = 0;
+  this.angle = 0;
+  this.renderComplete = false;
 };
 LSystem.prototype.determineSizeInfo = function() {
   var turtle = createVector(0, 0);
+  var angle = 0;
   var x0, y0, x1, y1, points;
   x0 = y0 = x1 = y1 = points = 0;
   for (var i = 0; i < this.production.length; i++) {
     switch(this.production.charAt(i)) {
       case '+':
-        this.angle += this.theta;
+        angle += this.theta;
         break;
       case '-':
-        this.angle -= this.theta;
+        angle -= this.theta;
         break;
       default:
         points++;
-        turtle.x += cos(this.angle);
-        turtle.y += sin(this.angle);
+        turtle.x += cos(angle);
+        turtle.y += sin(angle);
         if (turtle.x < x0) x0 = turtle.x;
         if (turtle.y < y0) y0 = turtle.y;
         if (turtle.x > x1) x1 = turtle.x;
@@ -230,4 +271,6 @@ LSystem.prototype.renderStep = function(steps) {
         break;
     }
   }
+  if (this.index == this.production.length)
+    this.renderComplete = true;
 };
