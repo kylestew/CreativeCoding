@@ -21,13 +21,13 @@ WiFiUDP udpConn;
 
 /* Pixels */
 const int NEO_PIXEL_PIN = 4; // D4 is pixel pin
-const int NEO_PIXEL_COUNT = 1;
+const int NEO_PIXEL_COUNT = 5;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NEO_PIXEL_COUNT, NEO_PIXEL_PIN, NEO_GRB + NEO_KHZ400);
 
 /* Checking */
 const int LOOP_SLEEP = 20;
 int checkInDelay = 0;
-const int checkInReset = 250; // 250 * 20 = 5 seconds
+const int checkInReset = 500; // 500 * 20 = 10 seconds
 
 
 void setup() {
@@ -45,7 +45,8 @@ void setup() {
   
   // initialze NeoPixels
   pixels.begin();
-  pixels.setPixelColor(0, pixels.Color(0, 0, 0));
+  for(int i = 0; i < NEO_PIXEL_COUNT; i++)
+    pixels.setPixelColor(i, pixels.Color(0, 0, 0));
   pixels.show();
 }
 
@@ -128,19 +129,19 @@ char * numToOSCAddress( int pin){
 /*
  * /led/0 R(int) G(int) B(int)
  */
-void routeLed(OSCMessage &msg, int addrOffset) {
-//  for(byte led = 0; led < NEO_PIXEL_COUNT; led++) {
-//    int ledMatched = msg.match(numToOSCAddress(led), addrOffset);
-//    if(ledMatched) {
+void routeLed(OSCMessage &msg, int addrOffset) {  
+  for(byte led = 0; led < NEO_PIXEL_COUNT; led++) {
+    int ledMatched = msg.match(numToOSCAddress(led), addrOffset);
+    if(ledMatched) {
 
       int r = msg.getInt(0);
       int g = msg.getInt(1);
       int b = msg.getInt(2);
       
-      pixels.setPixelColor(0, pixels.Color(r, g, b));
+      pixels.setPixelColor(led, pixels.Color(r, g, b));
       pixels.show();
-//    }
-//  }
+    }
+  }
 }
 
 
