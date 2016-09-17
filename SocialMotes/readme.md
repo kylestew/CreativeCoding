@@ -2,6 +2,13 @@
 OSC Lib
 https://github.com/sandeepmistry/esp8266-OSC
 
+Circuit Extras:
++ 1M Ohm resistor - BATT read
++ 220k Ohm resistor - BATT read
++ 1000uF cap for - LED strand
++ 470 Ohm resistor - LED strand (connected in line with the data line)
+
+
 
 
 == TODOs ==
@@ -9,14 +16,16 @@ https://github.com/sandeepmistry/esp8266-OSC
 + Get IMU online
 + Order parts
 
+
++ Pull in some Neopixel demo code
+https://learn.adafruit.com/adafruit-neopixel-uberguide/arduino-library-installation
 + Heart beat mode
 + Color on rotate mode
 + Shake fireflies
-
 + Control modes via MaxMSP
 
 
-
++ Look into using NRF24L01
 + Positional tracking in room?
 + How long will the battery last
 + Get proper resistor/cap setup for LEDs
@@ -40,16 +49,10 @@ https://www.adafruit.com/products/258
 $9.95
 
 LEDs
-https://www.adafruit.com/products/1312
-https://www.adafruit.com/products/1612
-$4.95
-
-Perfboard or Breadboards
-https://www.sparkfun.com/products/13268
-https://www.adafruit.com/products/64
 ~$2
-
-Proper resistors for Battery reading
+Perfboard
+~$2
+Resitors
 
 
 
