@@ -3,7 +3,6 @@
 #include <OSCMessage.h>
 #include <OSCBundle.h>
 #include <Adafruit_NeoPixel.h>
-
 #include <Wire.h>
 #include "quaternionFilters.h"
 #include <MPU9250.h>
@@ -24,18 +23,19 @@ WiFiUDP udpConn;
 
 /* IMU */
 #define AHRS false
-#define SerialDebug true
+#define SerialDebug false
 MPU9250 imu;
 
 /* Pixels */
 const int NEO_PIXEL_PIN = 4; // D4 is pixel pin
 const int NEO_PIXEL_COUNT = 5;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NEO_PIXEL_COUNT, NEO_PIXEL_PIN, NEO_GRB + NEO_KHZ400);
+int r, g, b;
 
 /* Checking */
-const int LOOP_SLEEP = 20;
+const int LOOP_SLEEP = 10;
 int checkInDelay = 0;
-const int checkInReset = 500; // 500 * 20 = 10 seconds
+const int checkInReset = 1000; // 500 * 10 = 10 seconds
 
 
 void setup() {
@@ -53,9 +53,8 @@ void setup() {
   
   // initialze NeoPixels
   pixels.begin();
-  for(int i = 0; i < NEO_PIXEL_COUNT; i++)
-    pixels.setPixelColor(i, pixels.Color(0, 0, 0));
-  pixels.show();
+  r = g = b = 0;
+  setAllPixels(r, g, b);
 }
 
 void loop() {
@@ -76,8 +75,22 @@ void loop() {
 
   // imu
   updateIMU();
-  // TODO: do something with it?
-  
+
+
+
+Serial.print(imu.ax);
+Serial.print(" :: ");
+Serial.print(imu.ay);
+Serial.print(" :: ");
+Serial.println(imu.az);
+
+  // TEMP: output IMU data as R,G,B values
+  r = lerp(r, (imu.ax + 1.0)/2.0 * 255, 0.2);
+  g = lerp(g, (imu.ay + 1.0)/2.0 * 255, 0.2);
+  b = lerp(b, (imu.az + 1.0)/2.0 * 255, 0.2);
+  setAllPixels(r, g, b);
+
+
 
   delay(LOOP_SLEEP); // allow ESP8266 to do some work in the background
   // TODO: don't use loop - switch to interrupts
@@ -89,6 +102,18 @@ void loop() {
     sayHi();
   if (checkInDelay > checkInReset)
     checkInDelay = 0;
+}
+
+
+// === PIXELS ===
+void setAllPixels(int r, int g, int b) {
+  for(int i = 0; i < NEO_PIXEL_COUNT; i++)
+    pixels.setPixelColor(i, pixels.Color(r, g, b));
+  pixels.show();
+}
+
+int lerp(int start, int end, float percent) {
+  return start + percent * (end - start);
 }
 
 
@@ -112,8 +137,6 @@ void sayHi() {
 
   // read ADC for current batt voltage
   int battVcc = analogRead(A0);
-  Serial.println("BATT VCC:");
-  Serial.println(battVcc);
   msg.add((int32_t)battVcc);
 
   sendOSCMessage(&msg);
@@ -159,7 +182,7 @@ void routeLed(OSCMessage &msg, int addrOffset) {
 
 // === NETWORK ===
 void beginNetwork() {
-    byte ledStatus = LOW;
+  byte ledStatus = LOW;
   Serial.print("Connecting to ");
   Serial.println(ssid);
   WiFi.mode(WIFI_STA); // connect to local wifi, don't make an access point
