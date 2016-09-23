@@ -13,12 +13,6 @@ Circuit Extras:
 
 == TODOs ==
 
-+ Get IMU online
-+ Order parts
-
-
-+ Pull in some Neopixel demo code
-https://learn.adafruit.com/adafruit-neopixel-uberguide/arduino-library-installation
 + Heart beat mode
 + Color on rotate mode
 + Shake fireflies
@@ -53,9 +47,6 @@ LEDs
 Perfboard
 ~$2
 Resitors
-
-
-
 
 
 

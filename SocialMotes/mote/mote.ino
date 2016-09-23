@@ -12,8 +12,10 @@
 const int STATUS_LED = 5;
 
 /* Wifi */
-const char* ssid = "TRUMP 4 PREZ";
-const char* password = "monkeybusine$$";
+//const char* ssid = "TRUMP 4 PREZ";
+//const char* password = "monkeybusine$$";
+const char* ssid = "Pixite 2.4";
+const char* password = "pansearedme9";
 
 /* UDP */
 // nNeed to assign static IP to master control
@@ -74,21 +76,31 @@ void loop() {
   }
 
   // imu
-  updateIMU();
+//  updateIMU();
 
-
-
-Serial.print(imu.ax);
-Serial.print(" :: ");
-Serial.print(imu.ay);
-Serial.print(" :: ");
-Serial.println(imu.az);
+//Serial.print(imu.ax);
+//Serial.print(" :: ");
+//Serial.print(imu.ay);
+//Serial.print(" :: ");
+//Serial.println(imu.az);
 
   // TEMP: output IMU data as R,G,B values
-  r = lerp(r, (imu.ax + 1.0)/2.0 * 255, 0.2);
-  g = lerp(g, (imu.ay + 1.0)/2.0 * 255, 0.2);
-  b = lerp(b, (imu.az + 1.0)/2.0 * 255, 0.2);
-  setAllPixels(r, g, b);
+//  r = lerp(r, (imu.ax + 1.0)/2.0 * 255, 0.2);
+//  g = lerp(g, (imu.ay + 1.0)/2.0 * 255, 0.2);
+//  b = lerp(b, (imu.az + 1.0)/2.0 * 255, 0.2);
+//  setAllPixels(r, g, b);
+
+
+
+  // rainbow
+  uint16_t i, j;
+  for (j = 0; j < 256; j++) {
+    for (i = 0; i < pixels.numPixels(); i++) {
+      pixels.setPixelColor(i, Wheel((i+j) & 255));
+    }
+    pixels.show();
+    delay(20);
+  }
 
 
 
@@ -103,6 +115,28 @@ Serial.println(imu.az);
   if (checkInDelay > checkInReset)
     checkInDelay = 0;
 }
+
+
+
+
+
+
+// Input a value 0 to 255 to get a color value.
+// The colours are a transition r - g - b - back to r.
+uint32_t Wheel(byte WheelPos) {
+  WheelPos = 255 - WheelPos;
+  if(WheelPos < 85) {
+    return pixels.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+  }
+  if(WheelPos < 170) {
+    WheelPos -= 85;
+    return pixels.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+  }
+  WheelPos -= 170;
+  return pixels.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+}
+
+
 
 
 // === PIXELS ===
